@@ -153,16 +153,16 @@ void setVecToScale(vector<point> &points){
 	}
 }
 
-// Makes dot on pixels
+// Makes cross on pixels
 void makeCross(vector< vector<Color> > &pixels, int x, int y, int r, Color c){
 	pixels[y][x] = c;
 	for(int i = 1; i < r; i++){
-		if(y+i<pixels.size())pixels[y+i][x] = c;
-		if(x+i<pixels[0].size())pixels[y][x+i] = c;
-		//if(x+i<pixels[0].size() && y+i<pixels.size())pixels[y+i][x+i] = c;
-		if(x-i>0)pixels[y][x-i] = c;
-		if(y-i>0)pixels[y-i][x] = c;
+		if(y+i<pixels.size()){pixels[y+i][x] = c; makeCross(pixels, x, y+i, r*0.15, c);}
+		if(x+i<pixels[0].size()){pixels[y][x+i] = c; makeCross(pixels, x+i, y, r*0.15, c);}
+		if(x-i>0){pixels[y][x-i] = c; makeCross(pixels, x-i, y, r*0.15, c);}
+		if(y-i>0){pixels[y-i][x] = c; makeCross(pixels, x, y-i, r*0.15, c);}
 		//if(x-i>0 && y-i>0)pixels[y-i][x-i] = c;
+		//if(x+i<pixels[0].size() && y+i<pixels.size())pixels[y+i][x+i] = c;
 	}
 }
 
@@ -208,5 +208,5 @@ int main(){
 	setHeight(1024);
 	setWidth(1024);
 	vector< vector<int> > testPoints = {{0,0}, {5,5}, {1,6}, {3,2}, {1,2}, {3,4}, {2,3}};
-	plotPoints("testPointPlot.ppm", testPoints);
+	plotPoints("testPointPlot_1024x1024.ppm", testPoints);
 }
