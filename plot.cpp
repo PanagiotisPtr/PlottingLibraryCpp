@@ -155,20 +155,36 @@ void setVecToScale(vector<point> &points){
 
 // Makes cross on pixels
 void makeCross(vector< vector<Color> > &pixels, int x, int y, int r, Color c){
-	pixels[y][x] = c;
+	if(x<pixels[0].size() && x>=0 && y<pixels.size() && y>=0)pixels[y][x] = c;
+	else return;
 	for(int i = 1; i < r; i++){
 		if(y+i<pixels.size()){pixels[y+i][x] = c; makeCross(pixels, x, y+i, r*0.15, c);}
 		if(x+i<pixels[0].size()){pixels[y][x+i] = c; makeCross(pixels, x+i, y, r*0.15, c);}
-		if(x-i>0){pixels[y][x-i] = c; makeCross(pixels, x-i, y, r*0.15, c);}
-		if(y-i>0){pixels[y-i][x] = c; makeCross(pixels, x, y-i, r*0.15, c);}
+		if(x-i>=0){pixels[y][x-i] = c; makeCross(pixels, x-i, y, r*0.15, c);}
+		if(y-i>=0){pixels[y-i][x] = c; makeCross(pixels, x, y-i, r*0.15, c);}
+		//if(x-i>0 && y-i>0)pixels[y-i][x-i] = c;
+		//if(x+i<pixels[0].size() && y+i<pixels.size())pixels[y+i][x+i] = c;
+	}
+}
+
+// Makes dot on pixels
+void makeDot(vector< vector<Color> > &pixels, int x, int y, int r, Color c){
+	if(x<pixels[0].size() && x>=0 && y<pixels.size() && y>=0)pixels[y][x] = c;
+	else return;
+	for(int i = 1; i < r; i++){
+		if(y+i<pixels.size()){pixels[y+i][x] = c; makeDot(pixels, x, y+i, r-1, c);}
+		if(x+i<pixels[0].size()){pixels[y][x+i] = c; makeDot(pixels, x+i, y, r-1, c);}
+		if(x-i>=0){pixels[y][x-i] = c; makeDot(pixels, x-i, y, r-1, c);}
+		if(y-i>=0){pixels[y-i][x] = c; makeDot(pixels, x, y-i, r-1, c);}
 		//if(x-i>0 && y-i>0)pixels[y-i][x-i] = c;
 		//if(x+i<pixels[0].size() && y+i<pixels.size())pixels[y+i][x+i] = c;
 	}
 }
 
 // Plots points on image
+// Example: plotPoints("test.ppm", {{1,2},{3,4}}, 4, Color(255,0,255), "*") //Symbols include (*, +) for Dot and Cross
 template <typename T>
-void plotPoints(string filename, vector< vector<T> > v){
+void plotPoints(string filename, vector< vector<T> > v, T r, Color c, string type){
 	assert(validName(filename));
 	vector< vector<Color> > pixels = getPixelsVector();
 	vector<point> points = getPointVec(v);
@@ -182,7 +198,8 @@ void plotPoints(string filename, vector< vector<T> > v){
 	for(int i = 0; i < points.size(); i++){
 		int x = points[i].x;
 		int y = points[i].y;
-		makeCross(pixels, x, y, (int)ceil(w*h*0.00005), Color(255,0,0));
+		if(type=="*")makeDot(pixels, x, y, r, c);
+		if(type=="+")makeCross(pixels, x, y, r, c);
 	}
 
 	cout << "Really?" << endl;
@@ -205,8 +222,9 @@ void plotPoints(string filename, vector< vector<T> > v){
 
 int main(){
 	//Testing
-	setHeight(1024);
-	setWidth(1024);
-	vector< vector<int> > testPoints = {{0,0}, {5,5}, {1,6}, {3,2}, {1,2}, {3,4}, {2,3}};
-	plotPoints("testPointPlot_1024x1024.ppm", testPoints);
+	setHeight(256);
+	setWidth(256);
+	vector< vector<int> > testPoints = {{0,0}, {5,5}, {1,6}, {3,2}, {1,2}, {3,4}, {2,3}, {2,2}, {3,3}, {5,2}, {7,8}};
+	plotPoints("testSelectionDot.ppm", testPoints, 4, Color(60,10,255), "*");
+	plotPoints("testSelectionCross.ppm", testPoints, 4, Color(60,10,255), "+");
 }
