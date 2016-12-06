@@ -12,18 +12,27 @@ Note: The images are all saved as .ppm files.
 
 Quick Exampels:
 
-![alt tag](https://s14.postimg.org/6mxa1b2sh/test_Selection_Cross.png)
-![alt tag](https://s14.postimg.org/sndmhxlgh/test_Selection_Dot.png)
+<img src="https://s12.postimg.org/3s6da9p8d/group_Point_Plot.png" width="250" height="250">
+<img src="https://s12.postimg.org/ueitz8tfh/test_Line_Plot.png" width="250" height="250">
+<img src="https://s12.postimg.org/hbn7fz37h/test_Line_Plot_Parabola.png" width="250" height="250">
 
 Example Code for the above plots:
 
 ```cpp
 int main(){
-	setHeight(256);
-	setWidth(256);
+	//Testing
+	setHeight(512);
+	setWidth(512);
+	vector< vector<int> > testLine = {{0,0},{1,2},{2,4},{4,8},{8,16}}; // y = x*2
+	vector< vector<int> > testLineWeird = {{0,0},{1,2},{2,4},{4,3},{8,16}};
 	vector< vector<int> > testPoints = {{0,0}, {5,5}, {1,6}, {3,2}, {1,2}, {3,4}, {2,3}, {2,2}, {3,3}, {5,2}, {7,8}};
-	plotPoints("testSelectionDot.ppm", testPoints, 4, Color(60,10,255), "*");
-	plotPoints("testSelectionCross.ppm", testPoints, 4, Color(60,10,255), "+");
+	vector< vector<int> > parabola;
+	for(int i = 0; i <= 100; i++)parabola.push_back({i, i*i});
+
+	plotPoints("selectionDotWithGrid.ppm", testPoints, 3, Color(60,10,255), "*");
+    	plotPoints("selectionCrossWithGrid.ppm", testPoints, 5, Color(60,10,255), "+");
+    	plotLine("testLinePlotParabola.ppm", parabola, 1, Color(60,10,255));
+	plotPoints("groupPointPlot.ppm", vector< vector< vector<int> > >{testPoints, testLineWeird}, 5, vector<Color>{Color(60,10,255), Color(255,10,60)}, vector<string>{"*","*"});
 }
 ```
 
@@ -34,3 +43,4 @@ Panagiotis Petridis, High School Student
 Greece
 
 If you have an opening in your team be sure to shoot me an email!
+
