@@ -31,6 +31,13 @@ int h = 128; // Height
 
 int maxColorVal = 255; // Maximum Value that each color pixel can have
 
+// Variables to set plot to scale
+double Xmax = -99999;
+double Xmin = +99999;
+double Ymax = -99999;
+double Ymin = +99999;
+
+
 // RGB Color Struct
 struct Color{
 	double r; // Red
@@ -72,6 +79,14 @@ vector<point> getPointVec(vector< vector<T> > v){
 	assert(v[0].size()==2);
 	vector<point> temp;
 	for(int i = 0; i < v.size(); i++)temp.push_back(point(v[i][0], v[i][1]));
+	return temp;
+}
+
+// Converts 2D vector to point vector For Vectors with multiple Columns
+template <typename T>
+vector<point> getPointVec(vector< vector<T> > v, int xAxis, int yAxis){
+	vector<point> temp;
+	for(int i = 0; i < v.size(); i++)temp.push_back(point(v[i][xAxis], v[i][yAxis]));
 	return temp;
 }
 
@@ -138,16 +153,27 @@ void testPlot(string filename){
 	write.close();
 }
 
-// Sets vector values and grid to the correct scale so that they display nicely on the image
-void setVecToScale(vector<point> &points){
-	double Xmax = -99999;
-	double Xmin = +99999;
+void setMinMaxScalers(vector<point> points){
 	for(int i = 0; i < points.size(); i++){
 		if(points[i].x>Xmax)Xmax=points[i].x;
 		if(points[i].x<Xmin)Xmin=points[i].x;
 	}
-	double Ymax = -99999;
-	double Ymin = +99999;
+	for(int i = 0; i < points.size(); i++){
+		if(points[i].y>Ymax)Ymax=points[i].y;
+		if(points[i].y<Ymin)Ymin=points[i].y;
+	}
+}
+
+// Sets vector values and grid to the correct scale so that they display nicely on the image
+void setVecToScale(vector<point> &points){
+	//double Xmax = -99999;
+	//double Xmin = +99999;
+	for(int i = 0; i < points.size(); i++){
+		if(points[i].x>Xmax)Xmax=points[i].x;
+		if(points[i].x<Xmin)Xmin=points[i].x;
+	}
+	//double Ymax = -99999;
+	//double Ymin = +99999;
 	for(int i = 0; i < points.size(); i++){
 		if(points[i].y>Ymax)Ymax=points[i].y;
 		if(points[i].y<Ymin)Ymin=points[i].y;
@@ -235,6 +261,52 @@ void plotPoints(string filename, vector< vector<T> > v, double r, Color c, strin
 	assert(validName(filename));
 	vector< vector<Color> > pixels = getPixelsVector();
 	vector<point> points = getPointVec(v);
+
+	Xmax = -99999;
+	Xmin = +99999;
+	Ymax = -99999;
+	Ymin = +99999;
+
+	setVecToScale(points);
+
+	setPixelsToWhite(pixels);
+	addGridToPlot(pixels);
+
+	for(int i = 0; i < points.size(); i++){
+		int x = points[i].x;
+		int y = points[i].y;
+		if(type=="*")makeDot(pixels, x, y, r, c);
+		if(type=="+")makeCross(pixels, x, y, r, c);
+	}
+
+	ofstream write;
+	write.open(filename.c_str());
+
+	write << getPPMHeader();
+
+	for(int y = h-1; y >= 0; y--){
+		for(int x = 0; x < w; x++){
+			write << pixels[y][x].r << endl;
+			write << pixels[y][x].g << endl;
+			write << pixels[y][x].b << endl;
+		}	
+	}
+
+	write.close(); 
+}
+
+// Plot Points for 2D vector with multiple columns
+template <typename T>
+void plotPoints(string filename, vector< vector<T> > v, int xAxis, int yAxis, double r, Color c, string type){
+	assert(validName(filename));
+	vector< vector<Color> > pixels = getPixelsVector();
+	vector<point> points = getPointVec(v, xAxis, yAxis);
+
+	Xmax = -99999;
+	Xmin = +99999;
+	Ymax = -99999;
+	Ymin = +99999;
+
 	setVecToScale(points);
 
 	setPixelsToWhite(pixels);
@@ -271,9 +343,59 @@ void plotPoints(string filename, vector< vector< vector<T> > > vVec, double r, v
 	setPixelsToWhite(pixels);
 	addGridToPlot(pixels);
 
+	Xmax = -99999;
+	Xmin = +99999;
+	Ymax = -99999;
+	Ymin = +99999;
+
+	for(int i = 0; i < vVec.size(); i++)setMinMaxScalers(getPointVec(vVec[i]));
 
 	for(int i = 0; i < vVec.size(); i++){
 		vector<point> points = getPointVec(vVec[i]);
+		setVecToScale(points);
+		string type = typeVec[i];
+		Color c = cVec[i];
+		for(int i = 0; i < points.size(); i++){
+			int x = points[i].x;
+			int y = points[i].y;
+			if(type=="*")makeDot(pixels, x, y, r, c);
+			if(type=="+")makeCross(pixels, x, y, r, c);
+		}
+	}
+
+	ofstream write;
+	write.open(filename.c_str());
+
+	write << getPPMHeader();
+
+	for(int y = h-1; y >= 0; y--){
+		for(int x = 0; x < w; x++){
+			write << pixels[y][x].r << endl;
+			write << pixels[y][x].g << endl;
+			write << pixels[y][x].b << endl;
+		}	
+	}
+
+	write.close(); 
+}
+
+// Plot differently colored points for 2D vector with multiple columns
+template <typename T>
+void plotPoints(string filename, vector< vector< vector<T> > > vVec, int xAxis, int yAxis, double r, vector<Color> cVec, vector<string> typeVec){
+	assert(validName(filename));
+	vector< vector<Color> > pixels = getPixelsVector();
+	setPixelsToWhite(pixels);
+	addGridToPlot(pixels);
+
+	Xmax = -99999;
+	Xmin = +99999;
+	Ymax = -99999;
+	Ymin = +99999;
+
+	for(int i = 0; i < vVec.size(); i++)setMinMaxScalers(getPointVec(vVec[i], xAxis, yAxis));
+
+	for(int i = 0; i < vVec.size(); i++){
+		vector<point> points = getPointVec(vVec[i], xAxis, yAxis);
 		setVecToScale(points);
 		string type = typeVec[i];
 		Color c = cVec[i];
@@ -311,6 +433,7 @@ void paintUpDownOnPixels(int x, int y, int thickness, Color c, vector< vector<Co
 	}
 }
 
+// Draws Line on Pixels
 void makeLineOnPixels(int x1, int y1, int x2, int y2, Color c, double r, vector< vector<Color> > &pixels){
 	double dx = x2 - x1;
 	double dy = y2 - y1;
@@ -329,6 +452,56 @@ void plotLine(string filename, vector< vector<T> > v, double r, Color c){
 	assert(validName(filename));
 	vector< vector<Color> > pixels = getPixelsVector();
 	vector<point> points = getPointVec(v);
+	
+	Xmax = -99999;
+	Xmin = +99999;
+	Ymax = -99999;
+	Ymin = +99999;
+
+	setVecToScale(points);
+
+	setPixelsToWhite(pixels);
+	addGridToPlot(pixels);
+
+	int startPointX = 0;
+	int startPointY = 0;
+
+	makeLineOnPixels(startPointX, startPointY, points[0].x, points[0].y, c, r, pixels);
+
+	for(int i = 1; i < points.size(); i++){
+		makeLineOnPixels(points[i-1].x, points[i-1].y, points[i].x, points[i].y, c, r, pixels);
+		//makeDot(pixels, points[i].x, points[i].y, r+2, c);
+	}
+
+	ofstream write;
+	write.open(filename.c_str());
+
+	write << getPPMHeader();
+
+	for(int y = h-1; y >= 0; y--){
+		for(int x = 0; x < w; x++){
+			write << pixels[y][x].r << endl;
+			write << pixels[y][x].g << endl;
+			write << pixels[y][x].b << endl;
+		}	
+	}
+
+	write.close();
+
+}
+
+// Plots points in Line for multiple column 2D vector on image
+template <typename T>
+void plotLine(string filename, vector< vector<T> > v, int xAxis, int yAxis, double r, Color c){
+	assert(validName(filename));
+	vector< vector<Color> > pixels = getPixelsVector();
+	vector<point> points = getPointVec(v, xAxis, yAxis);
+	
+	Xmax = -99999;
+	Xmin = +99999;
+	Ymax = -99999;
+	Ymin = +99999;
+
 	setVecToScale(points);
 
 	setPixelsToWhite(pixels);
