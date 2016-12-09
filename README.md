@@ -16,7 +16,7 @@ Quick Exampels:
 <img src="https://s12.postimg.org/ueitz8tfh/test_Line_Plot.png" width="250" height="250">
 <img src="https://s12.postimg.org/hbn7fz37h/test_Line_Plot_Parabola.png" width="250" height="250">
 
-Example Code for the above plots:
+Example Code:
 
 ```cpp
 int main(){
