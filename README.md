@@ -10,7 +10,7 @@ The Code has been tested on Linux Ubuntu 16.04 with C++11. You should be able to
 
 Note: The images are all saved as .ppm files.
 
-Quick Exampels:
+Example plots:
 
 <img src="https://s12.postimg.org/3s6da9p8d/group_Point_Plot.png" width="250" height="250">
 <img src="https://s12.postimg.org/ueitz8tfh/test_Line_Plot.png" width="250" height="250">
