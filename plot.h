@@ -75,15 +75,6 @@ struct point{
 
 // Converts 2D vector to point vector
 template <typename T>
-vector<point> getPointVec(vector< vector<T> > v){
-	assert(v[0].size()==2);
-	vector<point> temp;
-	for(int i = 0; i < v.size(); i++)temp.push_back(point(v[i][0], v[i][1]));
-	return temp;
-}
-
-// Converts 2D vector to point vector For Vectors with multiple Columns
-template <typename T>
 vector<point> getPointVec(vector< vector<T> > v, int xAxis, int yAxis){
 	vector<point> temp;
 	for(int i = 0; i < v.size(); i++)temp.push_back(point(v[i][xAxis], v[i][yAxis]));
@@ -112,14 +103,27 @@ void printPointVec(vector<point> a){ for(int i = 0; i < a.size(); i++)cout << "x
 // Returns PPM file Header
 string getPPMHeader(){
 	ostringstream ppmHeader;
-	ppmHeader << "P3\n" << w << '\n' << h << '\n' << maxColorVal << '\n';
+	ppmHeader << "P3\n" << w << endl << h << endl << maxColorVal << endl;
 	return ppmHeader.str();
 }
 
-// Returns Pixels Vector
-vector< vector<Color> > getPixelsVector(){
-	return vector< vector<Color> > (h, vector<Color>(w));
+// Gets a string version of everything that needs to be printed
+string getPixelsPrintString(vector< vector<Color> > &pixels){
+	ostringstream pixelsString;
+
+	for(int y = h-1; y >= 0; y--){
+		for(int x = 0; x < w; x++){
+			pixelsString << pixels[y][x].r << endl;
+			pixelsString << pixels[y][x].g << endl;
+			pixelsString << pixels[y][x].b << endl;
+		}	
+	}
+
+	return pixelsString.str();
 }
+
+// Returns Pixels Vector
+vector< vector<Color> > getPixelsVector(){ return vector< vector<Color> > (h, vector<Color>(w)); }
 
 // Sets image width
 template<typename T>
@@ -144,15 +148,15 @@ void testPlot(string filename){
 			pixels[y][x].r = 255;
 			pixels[y][x].g = 0;
 			pixels[y][x].b = 255;
-			write << pixels[y][x].r << endl;
-			write << pixels[y][x].g << endl;
-			write << pixels[y][x].b << endl;
 		}
 	}
+
+	write << getPixelsPrintString(pixels);
 
 	write.close();
 }
 
+// Sets Global Minimum and Maximum Values
 void setMinMaxScalers(vector<point> points){
 	for(int i = 0; i < points.size(); i++){
 		if(points[i].x>Xmax)Xmax=points[i].x;
@@ -166,21 +170,6 @@ void setMinMaxScalers(vector<point> points){
 
 // Sets vector values and grid to the correct scale so that they display nicely on the image
 void setVecToScale(vector<point> &points){
-	//double Xmax = -99999;
-	//double Xmin = +99999;
-	for(int i = 0; i < points.size(); i++){
-		if(points[i].x>Xmax)Xmax=points[i].x;
-		if(points[i].x<Xmin)Xmin=points[i].x;
-	}
-	//double Ymax = -99999;
-	//double Ymin = +99999;
-	for(int i = 0; i < points.size(); i++){
-		if(points[i].y>Ymax)Ymax=points[i].y;
-		if(points[i].y<Ymin)Ymin=points[i].y;
-	}
-	double gloabalMin = min(Xmin, Ymin);
-	double gloabalMax = max(Xmax, Ymax);
-
 	for(int i = 0; i < points.size(); i++){
 		points[i].x = (int)(((w)*(points[i].x - Xmin))/(Xmax - Xmin));
 		points[i].x -= points[i].x>0 ? 1 : 0;
@@ -201,8 +190,6 @@ void makeCross(vector< vector<Color> > &pixels, int x, int y, double r, Color c)
 		if(x+i<pixels[0].size()){pixels[y][x+i] = c; makeCross(pixels, x+i, y, r*0.15, c);}
 		if(x-i>=0){pixels[y][x-i] = c; makeCross(pixels, x-i, y, r*0.15, c);}
 		if(y-i>=0){pixels[y-i][x] = c; makeCross(pixels, x, y-i, r*0.15, c);}
-		//if(x-i>0 && y-i>0)pixels[y-i][x-i] = c;
-		//if(x+i<pixels[0].size() && y+i<pixels.size())pixels[y+i][x+i] = c;
 	}
 }
 
@@ -215,8 +202,6 @@ void makeDot(vector< vector<Color> > &pixels, int x, int y, double r, Color c){
 		if(x+i<pixels[0].size()){pixels[y][x+i] = c; makeDot(pixels, x+i, y, r-1, c);}
 		if(x-i>=0){pixels[y][x-i] = c; makeDot(pixels, x-i, y, r-1, c);}
 		if(y-i>=0){pixels[y-i][x] = c; makeDot(pixels, x, y-i, r-1, c);}
-		//if(x-i>0 && y-i>0)pixels[y-i][x-i] = c;
-		//if(x+i<pixels[0].size() && y+i<pixels.size())pixels[y+i][x+i] = c;
 	}
 }
 
@@ -233,6 +218,7 @@ void addGridToPlot(vector< vector<Color> > &pixels){
 	}
 }
 
+// Prints empty image with grid
 void plotTestGrid(string filename){
 	assert(validName(filename));
 	vector< vector<Color> > pixels = getPixelsVector();
@@ -242,144 +228,12 @@ void plotTestGrid(string filename){
 	write.open(filename.c_str());
 
 	write << getPPMHeader();
-
-	for(int y = h-1; y >= 0; y--){
-		for(int x = 0; x < w; x++){
-			write << pixels[y][x].r << endl;
-			write << pixels[y][x].g << endl;
-			write << pixels[y][x].b << endl;
-		}	
-	}
+	write << getPixelsPrintString(pixels);
 
 	write.close();
 }
 
-// Plots points on image
-// Example: plotPoints("test.ppm", {{1,2},{3,4}}, 4, Color(255,0,255), "*") //Symbols include (*, +) for Dot and Cross
-template <typename T>
-void plotPoints(string filename, vector< vector<T> > v, double r, Color c, string type){
-	assert(validName(filename));
-	vector< vector<Color> > pixels = getPixelsVector();
-	vector<point> points = getPointVec(v);
-
-	Xmax = -99999;
-	Xmin = +99999;
-	Ymax = -99999;
-	Ymin = +99999;
-
-	setVecToScale(points);
-
-	setPixelsToWhite(pixels);
-	addGridToPlot(pixels);
-
-	for(int i = 0; i < points.size(); i++){
-		int x = points[i].x;
-		int y = points[i].y;
-		if(type=="*")makeDot(pixels, x, y, r, c);
-		if(type=="+")makeCross(pixels, x, y, r, c);
-	}
-
-	ofstream write;
-	write.open(filename.c_str());
-
-	write << getPPMHeader();
-
-	for(int y = h-1; y >= 0; y--){
-		for(int x = 0; x < w; x++){
-			write << pixels[y][x].r << endl;
-			write << pixels[y][x].g << endl;
-			write << pixels[y][x].b << endl;
-		}	
-	}
-
-	write.close(); 
-}
-
-// Plot Points for 2D vector with multiple columns
-template <typename T>
-void plotPoints(string filename, vector< vector<T> > v, int xAxis, int yAxis, double r, Color c, string type){
-	assert(validName(filename));
-	vector< vector<Color> > pixels = getPixelsVector();
-	vector<point> points = getPointVec(v, xAxis, yAxis);
-
-	Xmax = -99999;
-	Xmin = +99999;
-	Ymax = -99999;
-	Ymin = +99999;
-
-	setVecToScale(points);
-
-	setPixelsToWhite(pixels);
-	addGridToPlot(pixels);
-
-	for(int i = 0; i < points.size(); i++){
-		int x = points[i].x;
-		int y = points[i].y;
-		if(type=="*")makeDot(pixels, x, y, r, c);
-		if(type=="+")makeCross(pixels, x, y, r, c);
-	}
-
-	ofstream write;
-	write.open(filename.c_str());
-
-	write << getPPMHeader();
-
-	for(int y = h-1; y >= 0; y--){
-		for(int x = 0; x < w; x++){
-			write << pixels[y][x].r << endl;
-			write << pixels[y][x].g << endl;
-			write << pixels[y][x].b << endl;
-		}	
-	}
-
-	write.close(); 
-}
-
-// Plot differently colored points
-template <typename T>
-void plotPoints(string filename, vector< vector< vector<T> > > vVec, double r, vector<Color> cVec, vector<string> typeVec){
-	assert(validName(filename));
-	vector< vector<Color> > pixels = getPixelsVector();
-	setPixelsToWhite(pixels);
-	addGridToPlot(pixels);
-
-	Xmax = -99999;
-	Xmin = +99999;
-	Ymax = -99999;
-	Ymin = +99999;
-
-	for(int i = 0; i < vVec.size(); i++)setMinMaxScalers(getPointVec(vVec[i]));
-
-	for(int i = 0; i < vVec.size(); i++){
-		vector<point> points = getPointVec(vVec[i]);
-		setVecToScale(points);
-		string type = typeVec[i];
-		Color c = cVec[i];
-		for(int i = 0; i < points.size(); i++){
-			int x = points[i].x;
-			int y = points[i].y;
-			if(type=="*")makeDot(pixels, x, y, r, c);
-			if(type=="+")makeCross(pixels, x, y, r, c);
-		}
-	}
-
-	ofstream write;
-	write.open(filename.c_str());
-
-	write << getPPMHeader();
-
-	for(int y = h-1; y >= 0; y--){
-		for(int x = 0; x < w; x++){
-			write << pixels[y][x].r << endl;
-			write << pixels[y][x].g << endl;
-			write << pixels[y][x].b << endl;
-		}	
-	}
-
-	write.close(); 
-}
-
-// Plot differently colored points for 2D vector with multiple columns
+// Plots Points on image
 template <typename T>
 void plotPoints(string filename, vector< vector< vector<T> > > vVec, int xAxis, int yAxis, double r, vector<Color> cVec, vector<string> typeVec){
 	assert(validName(filename));
@@ -411,14 +265,7 @@ void plotPoints(string filename, vector< vector< vector<T> > > vVec, int xAxis, 
 	write.open(filename.c_str());
 
 	write << getPPMHeader();
-
-	for(int y = h-1; y >= 0; y--){
-		for(int x = 0; x < w; x++){
-			write << pixels[y][x].r << endl;
-			write << pixels[y][x].g << endl;
-			write << pixels[y][x].b << endl;
-		}	
-	}
+	write << getPixelsPrintString(pixels);
 
 	write.close(); 
 }
@@ -427,9 +274,11 @@ void plotPoints(string filename, vector< vector< vector<T> > > vVec, int xAxis, 
 void paintUpDownOnPixels(int x, int y, int thickness, Color c, vector< vector<Color> > &pixels){
 	for(int i = 1; i <= thickness; i++){
 		if(y+i<pixels.size())pixels[y+i][x] = c;
-		if(y-i>0)pixels[y-i][x] = c;
+		if(y-i>=0)pixels[y-i][x] = c;
 		if(x+i<pixels.size())pixels[y][x+i] = c;
-		if(x-i>0)pixels[y][x-i] = c;
+		if(x-i>=0)pixels[y][x-i] = c;
+		if(x-i>=0 && y-i>=0)pixels[y-i][x-i] = c;
+		if(x+i<pixels.size() && y+i<pixels.size())pixels[y+i][x+i] = c;
 	}
 }
 
@@ -446,108 +295,36 @@ void makeLineOnPixels(int x1, int y1, int x2, int y2, Color c, double r, vector<
 	}
 }
 
-// Plots points in Line on image
 template <typename T>
-void plotLine(string filename, vector< vector<T> > v, double r, Color c){
+void plotLine(string filename, vector< vector< vector<T> > > vVec, int xAxis, int yAxis, double r, vector<Color>cVec){
 	assert(validName(filename));
 	vector< vector<Color> > pixels = getPixelsVector();
-	vector<point> points = getPointVec(v);
-	
+	setPixelsToWhite(pixels);
+	addGridToPlot(pixels);
+
 	Xmax = -99999;
 	Xmin = +99999;
 	Ymax = -99999;
 	Ymin = +99999;
 
-	setVecToScale(points);
-
-	setPixelsToWhite(pixels);
-	addGridToPlot(pixels);
-
-	int startPointX = 0;
-	int startPointY = 0;
-
-	makeLineOnPixels(startPointX, startPointY, points[0].x, points[0].y, c, r, pixels);
-
-	for(int i = 1; i < points.size(); i++){
-		makeLineOnPixels(points[i-1].x, points[i-1].y, points[i].x, points[i].y, c, r, pixels);
-		//makeDot(pixels, points[i].x, points[i].y, r+2, c);
+	for(int i = 0; i < vVec.size(); i++)setMinMaxScalers(getPointVec(vVec[i], xAxis, yAxis));
+	
+	for(int vi = 0; vi < vVec.size(); vi++){
+		vector<point> points = getPointVec(vVec[vi], xAxis, yAxis);
+		setVecToScale(points);
+		Color c = cVec[vi];
+		for(int i = 1; i < points.size(); i++){
+			if(i==0)makeLineOnPixels(0, 0, points[i].x, points[i].y, c, r, pixels);
+			else makeLineOnPixels(points[i-1].x, points[i-1].y, points[i].x, points[i].y, c, r, pixels);
+		}
 	}
 
 	ofstream write;
 	write.open(filename.c_str());
 
 	write << getPPMHeader();
-
-	for(int y = h-1; y >= 0; y--){
-		for(int x = 0; x < w; x++){
-			write << pixels[y][x].r << endl;
-			write << pixels[y][x].g << endl;
-			write << pixels[y][x].b << endl;
-		}	
-	}
+	write << getPixelsPrintString(pixels);
 
 	write.close();
 
 }
-
-// Plots points in Line for multiple column 2D vector on image
-template <typename T>
-void plotLine(string filename, vector< vector<T> > v, int xAxis, int yAxis, double r, Color c){
-	assert(validName(filename));
-	vector< vector<Color> > pixels = getPixelsVector();
-	vector<point> points = getPointVec(v, xAxis, yAxis);
-	
-	Xmax = -99999;
-	Xmin = +99999;
-	Ymax = -99999;
-	Ymin = +99999;
-
-	setVecToScale(points);
-
-	setPixelsToWhite(pixels);
-	addGridToPlot(pixels);
-
-	int startPointX = 0;
-	int startPointY = 0;
-
-	makeLineOnPixels(startPointX, startPointY, points[0].x, points[0].y, c, r, pixels);
-
-	for(int i = 1; i < points.size(); i++){
-		makeLineOnPixels(points[i-1].x, points[i-1].y, points[i].x, points[i].y, c, r, pixels);
-		//makeDot(pixels, points[i].x, points[i].y, r+2, c);
-	}
-
-	ofstream write;
-	write.open(filename.c_str());
-
-	write << getPPMHeader();
-
-	for(int y = h-1; y >= 0; y--){
-		for(int x = 0; x < w; x++){
-			write << pixels[y][x].r << endl;
-			write << pixels[y][x].g << endl;
-			write << pixels[y][x].b << endl;
-		}	
-	}
-
-	write.close();
-
-}
-
-/*
-int main(){
-	//Testing
-	setHeight(512);
-	setWidth(512);
-	vector< vector<int> > testLine = {{0,0},{1,2},{2,4},{4,8},{8,16}}; // y = x*2
-	vector< vector<int> > testLineWeird = {{0,0},{1,2},{2,4},{4,3},{8,16}};
-	vector< vector<int> > testPoints = {{0,0}, {5,5}, {1,6}, {3,2}, {1,2}, {3,4}, {2,3}, {2,2}, {3,3}, {5,2}, {7,8}};
-	vector< vector<int> > parabola;
-	for(int i = 0; i <= 100; i++)parabola.push_back({i, i*i});
-
-	//plotPoints("selectionDotWithGrid.ppm", testPoints, 3, Color(60,10,255), "*");
-    //plotPoints("selectionCrossWithGrid.ppm", testPoints, 5, Color(60,10,255), "+");
-    //plotLine("testLinePlotParabola.ppm", parabola, 1, Color(60,10,255));
-	//plotPoints("groupPointPlot.ppm", vector< vector< vector<int> > >{testPoints, testLineWeird}, 5, vector<Color>{Color(60,10,255), Color(255,10,60)}, vector<string>{"*","*"});
-}
-*/
